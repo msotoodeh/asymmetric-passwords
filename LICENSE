@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2016 mehdi sotoodeh
+Copyright (c) 2016 mehdi sotoodeh, KryptoLogiK Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+Important notice:
+=================
+Above license is applicable for source code and documentation provided in 
+this project and provided by KryptoLogik Inc.
+This license does not cover third party code and resources as well as 
+patented algorithms and procedures.
+
+Asymmetric Passwords process is patent pending and is intelectual property of 
+KryptoLogiK Inc. You do not need any license for using this IP for small size
+installations (up to 10000 users), but you should obtain a license for larger
+sized installations.
