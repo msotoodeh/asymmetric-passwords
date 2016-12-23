@@ -1,6 +1,4 @@
 # asymmetric-passwords
-Fixing password security
-========================
 Copyright (c) 2016 Mehdi Sotoodeh, Kryptologik Inc.
 support@kryptologik.com
 
