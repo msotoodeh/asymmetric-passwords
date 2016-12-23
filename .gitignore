@@ -1,0 +1,14 @@
+build/
+build32/
+build64/
+Debug/
+Release/
+x64/
+ipch/
+*.a
+*.o
+*.sdf
+*.suo
+*.user
+*.opensdf
+
