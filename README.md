@@ -1,6 +1,5 @@
 # asymmetric-passwords
 Copyright (c) 2016 Mehdi Sotoodeh, Kryptologik Inc.
-support@kryptologik.com
 
 Passwords are the most common form of authentication used to control access to information and services. Passwords are widely used because they are simple, inexpensive, and convenient mechanisms to use and implement.
 
