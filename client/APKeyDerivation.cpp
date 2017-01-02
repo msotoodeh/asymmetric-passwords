@@ -161,35 +161,35 @@ static void PRF(
    uint8_t *dk, size_t dkLen,   // dkLen <= APDigest::DIGEST_SIZE
    uint8_t *tmpBuffer)
 {
-	uint8_t *inBlock = tmpBuffer + APDigest::DIGEST_SIZE;
-	uint8_t *outBlock = tmpBuffer;
-	/* inBlock = [ Salt || INT (blockNumber)]. */
-	memcpy (inBlock, salt, saltLen);
+    uint8_t *inBlock = tmpBuffer + APDigest::DIGEST_SIZE;
+    uint8_t *outBlock = tmpBuffer;
+    /* inBlock = [ Salt || INT (blockNumber)]. */
+    memcpy (inBlock, salt, saltLen);
 
-	inBlock[saltLen + 0] = (uint8_t)(blockNumber >> 24);
-	inBlock[saltLen + 1] = (uint8_t)(blockNumber >> 16);
-	inBlock[saltLen + 2] = (uint8_t)(blockNumber >> 8);
-	inBlock[saltLen + 3] = (uint8_t)(blockNumber);
+    inBlock[saltLen + 0] = (uint8_t)(blockNumber >> 24);
+    inBlock[saltLen + 1] = (uint8_t)(blockNumber >> 16);
+    inBlock[saltLen + 2] = (uint8_t)(blockNumber >> 8);
+    inBlock[saltLen + 3] = (uint8_t)(blockNumber);
 
     APDigest::hmac (
         password, passwordLen, 
         inBlock, saltLen + 4, 
         outBlock, APDigest::DIGEST_SIZE);
-	memcpy (dk, outBlock, dkLen);
+    memcpy (dk, outBlock, dkLen);
 
     for (uint32_t off = 0; iterations > 1; iterations--)
-	{
-		/* Swap inBlock and outBlock on each iteration */
-	    inBlock = tmpBuffer + off;
+    {
+        /* Swap inBlock and outBlock on each iteration */
+        inBlock = tmpBuffer + off;
         off ^= APDigest::DIGEST_SIZE;
-	    outBlock = tmpBuffer + off;
+        outBlock = tmpBuffer + off;
 
         APDigest::hmac (
             password, passwordLen, 
             inBlock, APDigest::DIGEST_SIZE, 
             outBlock, APDigest::DIGEST_SIZE);
-		for (uint32_t i = 0; i < dkLen; i++) dk[i] ^= outBlock[i];
-	}
+        for (uint32_t i = 0; i < dkLen; i++) dk[i] ^= outBlock[i];
+    }
 }
 
 void APDigest::pbkdf2(
@@ -198,23 +198,23 @@ void APDigest::pbkdf2(
     uint32_t iterations,
     uint8_t* dk,          size_t dkLen)
 {
-	uint8_t *tmpBuffer = new uint8_t[saltLen + 2*DIGEST_SIZE];
-	uint32_t blockNumber = 1;
-	while (dkLen >= DIGEST_SIZE)
-	{
-		PRF((const uint8_t*)password, passwordLen, 
+    uint8_t *tmpBuffer = new uint8_t[saltLen + 2*DIGEST_SIZE];
+    uint32_t blockNumber = 1;
+    while (dkLen >= DIGEST_SIZE)
+    {
+        PRF((const uint8_t*)password, passwordLen, 
             (const uint8_t*)salt, saltLen,
-		    iterations, blockNumber++, dk, DIGEST_SIZE, tmpBuffer);
-		dk += DIGEST_SIZE;
+            iterations, blockNumber++, dk, DIGEST_SIZE, tmpBuffer);
+        dk += DIGEST_SIZE;
         dkLen -= DIGEST_SIZE;
-	}
+    }
 
-	if (dkLen > 0)
-	{
-		PRF((const uint8_t*)password, passwordLen, 
+    if (dkLen > 0)
+    {
+        PRF((const uint8_t*)password, passwordLen, 
             (const uint8_t*)salt, saltLen,
-		    iterations, blockNumber, dk, dkLen, tmpBuffer);
-	}
+            iterations, blockNumber, dk, dkLen, tmpBuffer);
+    }
     delete [] tmpBuffer;
 }
 
