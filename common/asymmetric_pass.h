@@ -25,10 +25,9 @@
 #ifndef __asymmetric_passwords_h__
 #define __asymmetric_passwords_h__
 
-#define AP_ALGO_ED25519             "ed255"
-#define AP_ALGO_ECDSA_P256          "p256"
-#define AP_ALGO_ECDSA_P384          "p384"
-#define AP_ALGO_ECDSA_P512          "p512"
+#define AP_ALGO_ED25519             "ed255"     // ed25519-hmac-sha512
+#define AP_ALGO_ECDSA_SECP256R1     "p256"      // secp256r1-hmac-sha256
+#define AP_ALGO_ECDSA_SECP256K1     "k256"      // secp256k1-hmac-sha256
 
 #define AP_DEFAULT_ALGO             AP_ALGO_ED25519
 

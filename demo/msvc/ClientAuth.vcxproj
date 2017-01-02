@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\client\APKeyDerivation.cpp" />
     <ClCompile Include="..\..\client\APUser.cpp" />
     <ClCompile Include="..\..\client\APPrivateKey.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\client\APKeyDerivation.h" />
     <ClInclude Include="..\..\client\APUser.h" />
     <ClInclude Include="..\..\client\APPrivateKey.h" />
     <ClInclude Include="..\..\common\asymmetric_pass.h" />

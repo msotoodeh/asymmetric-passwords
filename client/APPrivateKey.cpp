@@ -28,6 +28,7 @@
 #include "curve25519/curve25519_mehdi.h"
 #include "curve25519/sha512.h"
 #include "base64.h"
+#include "APKeyDerivation.h"
 
 extern "C" 
 {
@@ -45,20 +46,12 @@ APPrivateKey::APPrivateKey(
 {
     struct
     {
-        SHA512_CTX kdf;
-        unsigned char digest[SHA512_DIGEST_LENGTH];
         unsigned char Kpub[PublicKeySize];
+        unsigned char sk[SecretKeySize];
     } d;
 
-    SHA512_Init(&d.kdf);
-    SHA512_Update(&d.kdf, userid.c_str(), userid.length());
-    SHA512_Update(&d.kdf, &kdf_separator, 1);
-    SHA512_Update(&d.kdf, password.c_str(), password.length());
-    SHA512_Update(&d.kdf, &kdf_separator, 1);
-    SHA512_Update(&d.kdf, domain.c_str(), domain.length());
-    SHA512_Final(d.digest, &d.kdf);
-
-    ed25519_CreateKeyPair (d.Kpub, m_Key, &edp_genkey_blinding, d.digest);
+    APDigest::kdf(userid, password, domain, d.sk, sizeof(d.sk)); 
+    ed25519_CreateKeyPair (d.Kpub, m_Key, &edp_genkey_blinding, d.sk);
     memset (&d, 0, sizeof(d));
 }
  

@@ -1,5 +1,5 @@
 # asymmetric-passwords
-Copyright (c) 2016 Mehdi Sotoodeh, Kryptologik Inc.
+Copyright (c) 2016, 2017 Mehdi Sotoodeh, Kryptologik Inc.
 
 Passwords are the most common form of authentication used to control access to information and services. Passwords are widely used because they are simple, inexpensive, and convenient mechanisms to use and implement.
 
@@ -132,5 +132,5 @@ Challenged authentication:
   |                    |                                  |
 ```
 
-A reference C++ implementation of this project is provided here which uses ED25519 and SHA512 as KDF. The ECC library is a clone of https://github.com/msotoodeh/curve25519. PBKDF2 and HMAC are the better choices for KDF.
+A reference C++ implementation of this project is provided here which uses ED25519 and PBKDF2-HMAC-SHA512 for KDF. The ECC library is a clone of https://github.com/msotoodeh/curve25519. 
      

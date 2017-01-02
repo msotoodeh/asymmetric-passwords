@@ -41,6 +41,7 @@ public:
     
     enum { // For ED25519
         SharedSecretSize    = 32, 
+        SecretKeySize       = 32, 
         PublicKeySize       = 32, 
         PrivateKeySize      = 64, 
         SignatureSize       = 64
