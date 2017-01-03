@@ -132,5 +132,5 @@ Challenged authentication:
   |                    |                                  |
 ```
 
-A reference C++ implementation of this project is provided here which uses ED25519 and PBKDF2-HMAC-SHA512 for KDF. The ECC library is a clone of https://github.com/msotoodeh/curve25519. 
+C++ and Javascript implementations of this project are provided here which uses ED25519 and PBKDF2-HMAC-SHA512 for KDF. The C++ ECC library is a clone of https://github.com/msotoodeh/curve25519 and Javascript implementation is based on https://github.com/dchest/tweetnacl-js library. 
      
