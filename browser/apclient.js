@@ -25,6 +25,9 @@
 var webcrypto = window.crypto || window.msCrypto;
 if (webcrypto.subtle) {
     console.log("Cryptography API Supported");
+    if (webcrypto.subtle.deriveBits == undefined) {
+        alert("Browser does not support 'deriveBits' method");
+    }
 } else {
     alert("Cryptography API NOT Supported");
 }
@@ -78,14 +81,12 @@ function apclient() {}
 apclient.prototype.kdf = function(userid, passwd, domain, msg) {
     var client = this;
     webcrypto.subtle.importKey(
-        "raw", //only "raw" is allowed
+        "raw",
         utf8StringToU8Array(passwd),
         { name: "PBKDF2", },
-        false, // not extractable
+        false,
         ["deriveBits"]
     ).then(function(pwkey) {
-        //returns a key object
-        console.log(pwkey);
         webcrypto.subtle.deriveBits(
             {
                 "name": "PBKDF2",
@@ -96,17 +97,15 @@ apclient.prototype.kdf = function(userid, passwd, domain, msg) {
             pwkey,
             256 // key size to derive
         ).then(function(derived_key) {
-            console.log("secret key -- " + derived_key.toString('hex'));
             var signKeys = nacl.sign.keyPair.fromSeed(new Uint8Array(derived_key));
             client.publicKey = signKeys.publicKey;
             client.privateKey = signKeys.secretKey;
-            
-            console.log("privateKey = " + client.privateKey.toString('hex'));
-            console.log("publicKey = " + client.publicKey.toString('hex')); 
-            console.log("publicKey = " + b64encode(client.publicKey)); 
-            var token = client.genToken(msg);
-            msg.showResults(client);
-            msg.submit(userid, token);
+            //console.log("publicKey = " + b64encode(client.publicKey)); 
+            if (msg.callback) msg.callback(client); else {
+                var token = client.genToken(msg);
+                msg.showResults(client);
+                msg.submit(userid, token);
+            }
         }).catch(function(err) {
             console.error(err);
         });
@@ -116,16 +115,16 @@ apclient.prototype.kdf = function(userid, passwd, domain, msg) {
 };
 
 apclient.prototype.genToken = function(msg) {
-    var ts = ((new Date).getTime()/1000) | 0;
+    var ts = Math.floor(Date.now()/1000);
     var token = msg.tag + "." + ts.toString(16) + "." + msg.payload(this) + "." +
     
     // append random nonce
-    Math.floor(Math.random() * 0x10000000).toString(16) +
-    Math.floor(Math.random() * 0x10000000).toString(16) +
-    Math.floor(Math.random() * 0x10000000).toString(16) + ".";
+    Math.floor(Math.random() * 0x100000000).toString(16) +
+    Math.floor(Math.random() * 0x100000000).toString(16) +
+    Math.floor(Math.random() * 0x100000000).toString(16) + ".";
     
-    console.log("unsigned token:", token);
+    //console.log("unsigned token:", token);
     var sig = nacl.sign.detached(utf8StringToU8Array(token), this.privateKey);
-    console.log("Signature:", b64encode(sig));
+    //console.log("Signature:", b64encode(sig));
     return token + b64encode(sig);
 };

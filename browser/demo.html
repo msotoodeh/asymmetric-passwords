@@ -5,11 +5,12 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <script type="text/javascript" src="nacl-fast.js"></script>
 <script type="text/javascript" src="apclient.js"></script>
+<script type="text/javascript" src="apverifier.js"></script>
 <script type="text/javascript">
 <!--
 // The MIT License (MIT)
 // 
-// Copyright (c) 2016, 2017 Mehdi Sotoodeh, KryptoLogik Inc.
+// Copyright (c) 2017 Mehdi Sotoodeh, KryptoLogik Inc.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining 
 // a copy of this software and associated documentation files (the 
@@ -35,12 +36,8 @@ var user_info_database = {};    // database of registered users
 
 function createToken(form, msg) {
     with (form) {
-        var newUser = new apclient();
-        newUser.kdf(f_userid.value, f_userpass.value, f_domain.value, msg);
-        //f_privateKey.value = b64encode(newUser.privateKey);
-        //f_publicKey.value = b64encode(newUser.publicKey);
-        //var token = newUser.genToken(msg);
-        //msg.submit(form, f_userid.value, token);
+        var ci = new apclient();
+        ci.kdf(f_userid.value, f_userpass.value, f_domain.value, msg);
     }
 }
 
@@ -49,7 +46,7 @@ function onRegisterNewUser(form) {
         {
             tag: 'nu', 
             payload: function(client) { return "ed255." + b64encode(client.publicKey); },
-            submit: function(uid, tkn) { serverDispatch_ProcessNewUserToken(form, uid, tkn); },
+            submit: function(uid, tkn) { serverDispatch_ProcessNewUserToken(this.view, uid, tkn); },
             view: form,
             showResults: function(client) {
                 with (this.view) {
@@ -61,11 +58,12 @@ function onRegisterNewUser(form) {
 }
 
 function onUserLogin(form) {
+    var duration = 10*60;   // timeout in seconds
     createToken(form, 
         {
             tag: 'li', 
-            payload: function(client) { return "600"; },
-            submit: function(uid, tkn) { serverDispatch_ProcessUserLoginToken(form, uid, tkn); },
+            payload: function(client) { return duration.toString(16); },
+            submit: function(uid, tkn) { serverDispatch_ProcessUserLoginToken(this.view, uid, tkn); },
             view: form,
             showResults: function(client) {
                 with (this.view) {
@@ -76,38 +74,54 @@ function onUserLogin(form) {
         });
 }
 
+function onChangePassword(form) {
+    with (form) {
+        var cp = new apclient();
+        cp.kdf(f_userid.value, f_newpass.value, f_domain.value, 
+        {
+            callback: function(new_client) {
+                var newPublicKey = b64encode(new_client.publicKey);
+                createToken(form, 
+                    {
+                        tag: 'cp', 
+                        payload: function(old_client) {
+                            return newPublicKey;
+                        },
+                        submit: function(uid, tkn) {
+                            serverDispatch_ProcessChangePasswordToken(this.view, uid, tkn);
+                        },
+                        view: form,
+                        showResults: function(client) {
+                            with (this.view) {
+                                f_oldPublicKey.value = b64encode(client.publicKey);
+                                f_newPublicKey.value = newPublicKey;
+                            }
+                        }
+                    });
+            }
+        });
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 // Server side processing
 ///////////////////////////////////////////////////////////////////////////////////
-
 function serverDispatch_ProcessNewUserToken(form, uid, token) {
   with (form) {
     console.log("signed token: " + token);
     f_tokenString.value = token;
-    var new_user = user_info_database[uid];
-    if (new_user) {
+    var new_user_record = user_info_database[uid];
+    if (new_user_record) {
         f_serverResult.value = "ERROR: User '" + uid + "' already exists.";
     } else {
-        var items = token.split('.');
-        
-        // token format is: tag.timestamp.algo.publicKey.signature
-        
-        // TODO:
-        //  1. Make sure items.length > 4 and tag == 'nu'
-        //  2. This token is self-signed, verify its signature
-        //  3. Validate timestamp
-        //  4. Make sure algo is supported
-        
-        var kpub = items[3];
-        // last item is signature
-        var sig = items[items.length-1];
-        var msg = utf8StringToU8Array(token.substring(0, token.length - sig.length));
-        if (nacl.sign.detached.verify(msg, b64decode(sig), b64decode(kpub))) {
+        var nu = new apUserState(token);
+        if (nu.checkNewUserToken()) {
             // Save user info
-            new_user = {};
-            new_user.algo = items[2];
-            new_user.publicKey = kpub;
-            user_info_database[uid] = new_user;
+            new_user_record = {};
+            new_user_record.algo = nu.getItem(2);
+            new_user_record.publicKey = nu.getItem(3);
+            new_user_record.lastTokenTime = nu.tokenTime;
+            user_info_database[uid] = new_user_record;
             f_serverResult.value = "User '" + uid + "' successfully added.";
         } else {
             f_serverResult.value = "FAILED: signature mismatch!!";
@@ -120,25 +134,35 @@ function serverDispatch_ProcessUserLoginToken(form, uid, token) {
   with (form) {
     console.log("signed token: " + token);
     f_tokenString.value = token;
-    var items = token.split('.');
-    
-    // token format is: tag.timestamp.duration.signature
-    
-    // TODO:
-    //  1. Make sure items.length > 3 and tag == 'nu'
-    //  2. This token is self-signed, verify its signature
-    //  3. Validate timestamp
-    //  4. Make sure algo is supported
     
     var user_info = user_info_database[uid];
     if (user_info) {
-        kpub = user_info.publicKey;
-        // last item is signature
-        var sig = items[items.length-1];
-        var msg = utf8StringToU8Array(token.substring(0, token.length - sig.length));
-        // validate signature
-        if (nacl.sign.detached.verify(msg, b64decode(sig), b64decode(kpub))) {
+        var li = new apUserState(token);
+        if (li.checkUserLoginToken(user_info.publicKey, user_info.lastTokenTime)) {
+            user_info_database[uid].lastTokenTime = li.tokenTime;
             f_serverResult.value = "SUCCESS: User '" + uid + "' logged in.";
+        } else {     
+            f_serverResult.value = "FAILED: signature mismatch!!";
+        }
+    } else {
+        f_serverResult.value = "ERROR: User '" + uid + "' not exists.";
+    }
+  }
+}
+
+function serverDispatch_ProcessChangePasswordToken(form, uid, token) {
+  with (form) {
+    console.log("signed token: " + token);
+    f_tokenString.value = token;
+    
+    var user_info = user_info_database[uid];
+    if (user_info) {
+        var cp = new apUserState(token);
+        if (cp.checkChangePasswordToken(user_info.publicKey, user_info.lastTokenTime)) {
+            // change user's public key
+            user_info_database[uid].publicKey = cp.getItem(2);  // new public key
+            user_info_database[uid].lastTokenTime = cp.tokenTime;
+            f_serverResult.value = "SUCCESS: Password for '" + uid + "' changed.";
         } else {     
             f_serverResult.value = "FAILED: signature mismatch!!";
         }
@@ -153,27 +177,40 @@ function serverDispatch_ProcessUserLoginToken(form, uid, token) {
 </head>
 <body style="text-align:right;">
 <h1>Asymmetric Passwords</h1>
-Copyright (c) 2016, 2017 KryptoLogiK Inc.
+Copyright (c) 2017 KryptoLogiK Inc.
 <h2>Register New User</h2>
 <form name="newUserForm">
-Username: <input style="text-align:left;" type="text" name="f_userid" size=64 /><br />
-Password: <input style="text-align:left;" type="text" name="f_userpass" size=64 /><br />
-Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size=64 /><br />
+Username: <input style="text-align:left;" type="text" name="f_userid" size="64" /><br />
+Password: <input style="text-align:left;" type="text" name="f_userpass" size="64" /><br />
+Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size="64" /><br />
 <input type=button onClick="javascript:onRegisterNewUser(newUserForm)" value="Register New User" /><br />
-Private key:<input style="text-align:left;" type=text name="f_privateKey" size=64 /><br />
-Public key: <input style="text-align:left;" type="text" name="f_publicKey" size=64 /><br />
+Private key:<input style="text-align:left;" type="text" name="f_privateKey" size="64" /><br />
+Public key: <input style="text-align:left;" type="text" name="f_publicKey" size="64" /><br />
 <code>tag.timestamp.algo.publicKey.nonce.signature</code><br />
 <textarea name="f_tokenString" id="newUserToken" readOnly="true" rows="2" cols="64"></textarea><br />
 <textarea name="f_serverResult" id="newUserResult" readOnly="true" rows="1" cols="64"></textarea>
 </form>
 <h2>User Login</h2>
 <form name="userLoginForm">
-Username: <input style="text-align:left;" type="text" name="f_userid" size=64 /><br />
-Password: <input style="text-align:left;" type="text" name="f_userpass" size=64 /><br />
-Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size=64 /><br />
+Username: <input style="text-align:left;" type="text" name="f_userid" size="64" /><br />
+Password: <input style="text-align:left;" type="text" name="f_userpass" size="64" /><br />
+Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size="64" /><br />
 <input type=button onClick="javascript:onUserLogin(userLoginForm)" value="User Login" /><br />
-Private key:<input style="text-align:left;" type=text name="f_privateKey" size=64 /><br />
-Public key: <input style="text-align:left;" type="text" name="f_publicKey" size=64 /><br />
+Private key:<input style="text-align:left;" type="text" name="f_privateKey" size="64" /><br />
+Public key: <input style="text-align:left;" type="text" name="f_publicKey" size="64" /><br />
+<code>tag.timestamp.duration.nonce.signature</code><br />
+<textarea name="f_tokenString" id="userLoginToken" rows="2" cols="64"></textarea><br />
+<textarea name="f_serverResult" id="userLoginResult" rows="1" cols="64"></textarea>
+</form>
+<h2>Change Password</h2>
+<form name="changePasswordForm">
+Username: <input style="text-align:left;" type="text" name="f_userid" size="64" /><br />
+Old Password: <input style="text-align:left;" type="text" name="f_userpass" size="64" /><br />
+New Password: <input style="text-align:left;" type="text" name="f_newpass" size="64" /><br />
+Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size="64" /><br />
+<input type=button onClick="javascript:onChangePassword(changePasswordForm)" value="Change Password" /><br />
+Old Public key: <input style="text-align:left;" type="text" name="f_oldPublicKey" size="64" /><br />
+New Public key: <input style="text-align:left;" type="text" name="f_newPublicKey" size="64" /><br />
 <code>tag.timestamp.duration.nonce.signature</code><br />
 <textarea name="f_tokenString" id="userLoginToken" rows="2" cols="64"></textarea><br />
 <textarea name="f_serverResult" id="userLoginResult" rows="1" cols="64"></textarea>
