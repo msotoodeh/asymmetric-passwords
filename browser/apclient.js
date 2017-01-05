@@ -22,27 +22,19 @@
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // 
 
-function apclient() {}
-
-apclient.prototype.kdf = function(userid, passwd, domain, msg) {
+function apclient(userid, passwd, domain) {
     var derived_key = pbkdf2_hmac_sha512(
         utf8StringToU8Array(passwd), 
         utf8StringToU8Array(userid + "&" + domain), 
         1000, 32);
     var signKeys = nacl.sign.keyPair.fromSeed(derived_key);
-    this.publicKey = signKeys.publicKey;
+    this.publicKey = b64encode(signKeys.publicKey);
     this.privateKey = signKeys.secretKey;
-    //console.log("publicKey = " + b64encode(this.publicKey)); 
-    if (msg.callback) msg.callback(this); else {
-        var token = this.genToken(msg);
-        msg.showResults(this);
-        msg.submit(userid, token);
-    }
 };
 
-apclient.prototype.genToken = function(msg) {
+apclient.prototype.genToken = function(tag, payload) {
     var ts = Math.floor(Date.now()/1000);
-    var token = msg.tag + "." + ts.toString(16) + "." + msg.payload(this) + "." +
+    var token = tag + "." + ts.toString(16) + "." + payload + "." +
     
     // append random nonce
     Math.floor(Math.random() * 0x100000000).toString(16) +
@@ -52,3 +44,15 @@ apclient.prototype.genToken = function(msg) {
     var sig = nacl.sign.detached(utf8StringToU8Array(token), this.privateKey);
     return token + b64encode(sig);
 };
+
+apclient.prototype.createNewUserToken = function() {
+    return this.genToken(AP_TAG_NEW_USER, AP_ALGO_ED25519 + "." + this.publicKey);
+}
+
+apclient.prototype.createUserLoginToken = function(duration) {
+    return this.genToken(AP_TAG_USER_LOGIN, duration.toString(16));
+}
+
+apclient.prototype.createChangePasswordToken = function(newPublicKey) {
+    return this.genToken(AP_TAG_CHANGE_PASSWORD, newPublicKey);
+}

@@ -36,72 +36,32 @@
 
 var user_info_database = {};    // database of registered users
 
-function createToken(form, msg) {
+function onRegisterNewUser(form) {
     with (form) {
-        var ci = new apclient();
-        ci.kdf(f_userid.value, f_userpass.value, f_domain.value, msg);
+        var c = new apclient(f_userid.value, f_userpass.value, f_domain.value);
+        var t = c.createNewUserToken();
+        f_publicKey.value = c.publicKey;
+        serverDispatch_ProcessNewUserToken(form, f_userid.value, t);
     }
 }
 
-function onRegisterNewUser(form) {
-    createToken(form, 
-        {
-            tag: AP_TAG_NEW_USER, 
-            payload: function(client) { return "ed255." + b64encode(client.publicKey); },
-            submit: function(uid, tkn) { serverDispatch_ProcessNewUserToken(this.view, uid, tkn); },
-            view: form,
-            showResults: function(client) {
-                with (this.view) {
-                    f_privateKey.value = b64encode(client.privateKey);
-                    f_publicKey.value = b64encode(client.publicKey);
-                }
-            }
-        });
-}
-
 function onUserLogin(form) {
-    var duration = 10*60;   // timeout in seconds
-    createToken(form, 
-        {
-            tag: AP_TAG_USER_LOGIN, 
-            payload: function(client) { return duration.toString(16); },
-            submit: function(uid, tkn) { serverDispatch_ProcessUserLoginToken(this.view, uid, tkn); },
-            view: form,
-            showResults: function(client) {
-                with (this.view) {
-                    f_privateKey.value = b64encode(client.privateKey);
-                    f_publicKey.value = b64encode(client.publicKey);
-                }
-            }
-        });
+    with (form) {
+        var c = new apclient(f_userid.value, f_userpass.value, f_domain.value);
+        var t = c.createUserLoginToken(10*60);
+        f_publicKey.value = c.publicKey;
+        serverDispatch_ProcessUserLoginToken(form, f_userid.value, t);
+    }
 }
 
 function onChangePassword(form) {
     with (form) {
-        var cp = new apclient();
-        cp.kdf(f_userid.value, f_newpass.value, f_domain.value, 
-        {
-            callback: function(new_client) {
-                var newPublicKey = b64encode(new_client.publicKey);
-                createToken(form, 
-                    {
-                        tag: AP_TAG_CHANGE_PASSWORD, 
-                        payload: function(old_client) {
-                            return newPublicKey;
-                        },
-                        submit: function(uid, tkn) {
-                            serverDispatch_ProcessChangePasswordToken(this.view, uid, tkn);
-                        },
-                        view: form,
-                        showResults: function(client) {
-                            with (this.view) {
-                                f_oldPublicKey.value = b64encode(client.publicKey);
-                                f_newPublicKey.value = newPublicKey;
-                            }
-                        }
-                    });
-            }
-        });
+        var c1 = new apclient(f_userid.value, f_oldpass.value, f_domain.value);
+        var c2 = new apclient(f_userid.value, f_newpass.value, f_domain.value);
+        var t = c1.createChangePasswordToken(c2.publicKey);
+        f_oldPublicKey.value = c1.publicKey;
+        f_newPublicKey.value = c2.publicKey;
+        serverDispatch_ProcessChangePasswordToken(form, f_userid.value, t);
     }
 }
 
@@ -145,6 +105,9 @@ function serverDispatch_ProcessUserLoginToken(form, uid, token) {
             f_serverResult.value = "SUCCESS: User '" + uid + "' logged in.";
         } else {     
             f_serverResult.value = "FAILED: signature mismatch!!";
+            if (li.error == AP_E_TIME) {
+                // TODO: do challenged authentication
+            }
         }
     } else {
         f_serverResult.value = "ERROR: User '" + uid + "' not exists.";
@@ -186,7 +149,6 @@ Username: <input style="text-align:left;" type="text" name="f_userid" size="64" 
 Password: <input style="text-align:left;" type="text" name="f_userpass" size="64" /><br />
 Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size="64" /><br />
 <input type=button onClick="javascript:onRegisterNewUser(newUserForm)" value="Register New User" /><br />
-Private key:<input style="text-align:left;" type="text" name="f_privateKey" size="64" /><br />
 Public key: <input style="text-align:left;" type="text" name="f_publicKey" size="64" /><br />
 <code>tag.timestamp.algo.publicKey.nonce.signature</code><br />
 <textarea name="f_tokenString" id="newUserToken" readOnly="true" rows="2" cols="64"></textarea><br />
@@ -198,7 +160,6 @@ Username: <input style="text-align:left;" type="text" name="f_userid" size="64" 
 Password: <input style="text-align:left;" type="text" name="f_userpass" size="64" /><br />
 Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size="64" /><br />
 <input type=button onClick="javascript:onUserLogin(userLoginForm)" value="User Login" /><br />
-Private key:<input style="text-align:left;" type="text" name="f_privateKey" size="64" /><br />
 Public key: <input style="text-align:left;" type="text" name="f_publicKey" size="64" /><br />
 <code>tag.timestamp.duration.nonce.signature</code><br />
 <textarea name="f_tokenString" id="userLoginToken" rows="2" cols="64"></textarea><br />
@@ -207,7 +168,7 @@ Public key: <input style="text-align:left;" type="text" name="f_publicKey" size=
 <h2>Change Password</h2>
 <form name="changePasswordForm">
 Username: <input style="text-align:left;" type="text" name="f_userid" size="64" /><br />
-Old Password: <input style="text-align:left;" type="text" name="f_userpass" size="64" /><br />
+Old Password: <input style="text-align:left;" type="text" name="f_oldpass" size="64" /><br />
 New Password: <input style="text-align:left;" type="text" name="f_newpass" size="64" /><br />
 Domain: <input style="text-align:left;" type="text" name="f_domain" value="www.example.com" size="64" /><br />
 <input type=button onClick="javascript:onChangePassword(changePasswordForm)" value="Change Password" /><br />

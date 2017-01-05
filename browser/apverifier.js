@@ -60,7 +60,7 @@ apUserState.prototype.verifySignature = function(publicKey) {
 }
 
 apUserState.prototype.isValid = function() {
-    if (this.error == AP_SUCCESS && Date.now() < this.tokenExpirationTime) {
+    if (this.error == AP_SUCCESS && Date.now() > this.tokenExpirationTime) {
         this.error = AP_E_EXPIRED;
     }
     return (this.error == AP_SUCCESS);
@@ -90,15 +90,15 @@ apUserState.prototype.checkUserLoginToken = function(publicKey, lastTokenTime) {
         this.error = AP_E_TOKEN;
         return false;
     }
+    if (!this.verifySignature(publicKey))
+    {
+        this.error = AP_E_SIGNATURE;
+        return false;
+    }
     // validate token timestamp
     if (Math.abs(this.tokenArrivalTime - this.tokenTime) > APV_MAX_TOKEN_TIME_DIFF ||
         this.lastTokenTime < lastTokenTime) {
         this.error = AP_E_TIME;
-        return false;
-    }
-    if (!this.verifySignature(publicKey))
-    {
-        this.error = AP_E_SIGNATURE;
         return false;
     }
     this.tokenExpirationTime = this.tokenArrivalTime + parseInt(this.items[2], 16) * 1000;
@@ -111,16 +111,16 @@ apUserState.prototype.checkChangePasswordToken = function(oldPublicKey, lastToke
         this.error = AP_E_TOKEN;
         return false;
     }
+    if (!this.verifySignature(oldPublicKey))
+    {
+        this.error = AP_E_SIGNATURE;
+        return false;
+    }
     // validate token timestamp
     if (Math.abs(this.tokenArrivalTime - this.tokenTime) > APV_MAX_TOKEN_TIME_DIFF ||
         this.lastTokenTime < lastTokenTime) {
         this.error = AP_E_TIME;
         return false;
     }
-    if (!this.verifySignature(oldPublicKey))
-    {
-        this.error = AP_E_SIGNATURE;
-        return false;
-   }
-   return true;
+    return true;
 }
