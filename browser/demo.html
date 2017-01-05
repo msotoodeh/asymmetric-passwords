@@ -4,6 +4,8 @@
 <title>Asymmetric Passwords</title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <script type="text/javascript" src="nacl-fast.js"></script>
+<script type="text/javascript" src="apcommon.js"></script>
+<script type="text/javascript" src="pbkdf2.js"></script>
 <script type="text/javascript" src="apclient.js"></script>
 <script type="text/javascript" src="apverifier.js"></script>
 <script type="text/javascript">
@@ -44,7 +46,7 @@ function createToken(form, msg) {
 function onRegisterNewUser(form) {
     createToken(form, 
         {
-            tag: 'nu', 
+            tag: AP_TAG_NEW_USER, 
             payload: function(client) { return "ed255." + b64encode(client.publicKey); },
             submit: function(uid, tkn) { serverDispatch_ProcessNewUserToken(this.view, uid, tkn); },
             view: form,
@@ -61,7 +63,7 @@ function onUserLogin(form) {
     var duration = 10*60;   // timeout in seconds
     createToken(form, 
         {
-            tag: 'li', 
+            tag: AP_TAG_USER_LOGIN, 
             payload: function(client) { return duration.toString(16); },
             submit: function(uid, tkn) { serverDispatch_ProcessUserLoginToken(this.view, uid, tkn); },
             view: form,
@@ -83,7 +85,7 @@ function onChangePassword(form) {
                 var newPublicKey = b64encode(new_client.publicKey);
                 createToken(form, 
                     {
-                        tag: 'cp', 
+                        tag: AP_TAG_CHANGE_PASSWORD, 
                         payload: function(old_client) {
                             return newPublicKey;
                         },
