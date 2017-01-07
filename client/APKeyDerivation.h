@@ -37,7 +37,7 @@ public:
         // sizes are based on SHA512
         BLOCK_SIZE = SHA512_CBLOCK, 
         DIGEST_SIZE = SHA512_DIGEST_LENGTH,
-        KDF_ITERATIONS = 1000, 
+        KDF_ITERATIONS = 100, 
     };
 
     APDigest();

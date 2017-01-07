@@ -155,40 +155,31 @@ void APDigest::kdf(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 static void PRF(
    const uint8_t *password, size_t passwordLen,
-   const uint8_t *salt, size_t saltLen,
+   uint8_t *saltBlock, size_t saltLen,
    uint32_t iterations,
    uint32_t blockNumber,
-   uint8_t *dk, size_t dkLen,   // dkLen <= APDigest::DIGEST_SIZE
-   uint8_t *tmpBuffer)
+   uint8_t *dk, size_t dkLen)   // dkLen <= APDigest::DIGEST_SIZE
 {
-    uint8_t *inBlock = tmpBuffer + APDigest::DIGEST_SIZE;
-    uint8_t *outBlock = tmpBuffer;
-    /* inBlock = [ Salt || INT (blockNumber)]. */
-    memcpy (inBlock, salt, saltLen);
-
-    inBlock[saltLen + 0] = (uint8_t)(blockNumber >> 24);
-    inBlock[saltLen + 1] = (uint8_t)(blockNumber >> 16);
-    inBlock[saltLen + 2] = (uint8_t)(blockNumber >> 8);
-    inBlock[saltLen + 3] = (uint8_t)(blockNumber);
+    uint8_t mac[APDigest::DIGEST_SIZE];
+    /* saltBlock = [ Salt || INT (blockNumber)]. */
+    saltBlock[saltLen + 0] = (uint8_t)(blockNumber >> 24);
+    saltBlock[saltLen + 1] = (uint8_t)(blockNumber >> 16);
+    saltBlock[saltLen + 2] = (uint8_t)(blockNumber >> 8);
+    saltBlock[saltLen + 3] = (uint8_t)(blockNumber);
 
     APDigest::hmac (
         password, passwordLen, 
-        inBlock, saltLen + 4, 
-        outBlock, APDigest::DIGEST_SIZE);
-    memcpy (dk, outBlock, dkLen);
+        saltBlock, saltLen + 4, 
+        mac, sizeof(mac));
+    memcpy (dk, mac, dkLen);
 
     for (uint32_t off = 0; iterations > 1; iterations--)
     {
-        /* Swap inBlock and outBlock on each iteration */
-        inBlock = tmpBuffer + off;
-        off ^= APDigest::DIGEST_SIZE;
-        outBlock = tmpBuffer + off;
-
         APDigest::hmac (
             password, passwordLen, 
-            inBlock, APDigest::DIGEST_SIZE, 
-            outBlock, APDigest::DIGEST_SIZE);
-        for (uint32_t i = 0; i < dkLen; i++) dk[i] ^= outBlock[i];
+            mac, APDigest::DIGEST_SIZE, 
+            mac, APDigest::DIGEST_SIZE);
+        for (uint32_t i = 0; i < dkLen; i++) dk[i] ^= mac[i];
     }
 }
 
@@ -198,13 +189,14 @@ void APDigest::pbkdf2(
     uint32_t iterations,
     uint8_t* dk,          size_t dkLen)
 {
-    uint8_t *tmpBuffer = new uint8_t[saltLen + 2*DIGEST_SIZE];
+    uint8_t *saltBlock = new uint8_t[saltLen + 4];
     uint32_t blockNumber = 1;
+    memcpy (saltBlock, salt, saltLen);
     while (dkLen >= DIGEST_SIZE)
     {
         PRF((const uint8_t*)password, passwordLen, 
-            (const uint8_t*)salt, saltLen,
-            iterations, blockNumber++, dk, DIGEST_SIZE, tmpBuffer);
+            saltBlock, saltLen,
+            iterations, blockNumber++, dk, DIGEST_SIZE);
         dk += DIGEST_SIZE;
         dkLen -= DIGEST_SIZE;
     }
@@ -212,9 +204,9 @@ void APDigest::pbkdf2(
     if (dkLen > 0)
     {
         PRF((const uint8_t*)password, passwordLen, 
-            (const uint8_t*)salt, saltLen,
-            iterations, blockNumber, dk, dkLen, tmpBuffer);
+            saltBlock, saltLen,
+            iterations, blockNumber, dk, dkLen);
     }
-    delete [] tmpBuffer;
+    delete [] saltBlock;
 }
 

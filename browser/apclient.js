@@ -20,13 +20,15 @@
 // CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 // SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-// 
+//
+
+var KDF_ITERATIONS = 100;
 
 function apclient(userid, passwd, domain) {
     var derived_key = pbkdf2_hmac_sha512(
         utf8StringToU8Array(passwd), 
-        utf8StringToU8Array(userid + "&" + domain), 
-        1000, 32);
+        utf8StringToU8Array(userid + "&" + domain),
+        KDF_ITERATIONS, 32);
     var signKeys = nacl.sign.keyPair.fromSeed(derived_key);
     this.publicKey = b64encode(signKeys.publicKey);
     this.privateKey = signKeys.secretKey;
