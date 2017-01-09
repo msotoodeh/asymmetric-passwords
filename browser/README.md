@@ -9,14 +9,14 @@ Please note that:
 The demo.html file contains client and server side code.
 For client side, include:
 ```
-    nacl-fast.min.js
+    nacl-ed25519.min.js
     apcommon.js
     pbkdf2.js
     apclient.js
 ```
 For server side, include:
 ```
-    nacl-fast.min.js
+    nacl-ed25519.min.js
     apcommon.js
     apverifier.js
 ```
