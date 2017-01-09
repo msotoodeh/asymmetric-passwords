@@ -60,7 +60,6 @@ const std::string APUser::getPublicKey() const
 }
 
 // tag.timestamp.algo.public_key.reset_info.signature
-//   reset_info may include contact info for reset-password
 const std::string APUser::registerNewUser(
     const std::string& pw_reset_info)
 {
@@ -73,7 +72,7 @@ const std::string APUser::registerNewUser(
 }
 
 // tag.timestamp.new_public_key.signature
-//  signature is generated using old_password
+//  signature is generated using new password
 const std::string APUser::resetPassword(
     const std::string& pw_reset_code)
 {

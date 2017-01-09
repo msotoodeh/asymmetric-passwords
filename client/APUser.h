@@ -39,15 +39,14 @@ public:
 
     ~APUser();
 
-    // tag.timestamp.valid_for.signature
+    // tag.timestamp.duration.signature
     const std::string login(uint64_t duration = 300);
 
     // tag.timestamp.algo.public_key.pw_reset_info.signature
-    //   pw_reset_info may include contact info for reset-password
     const std::string registerNewUser(const std::string& pw_reset_info);
 
     // tag.timestamp.new_public_key.signature
-    //  signature is generated using old_password
+    //  signature is generated using new password
     const std::string resetPassword(const std::string& reset_code);
 
     // tag.timestamp.new_public_key.signature

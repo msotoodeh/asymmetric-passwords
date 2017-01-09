@@ -67,24 +67,8 @@ public:
 
     int setKey(const std::string& public_key);
 
-    /* Register new user */
     bool parseUserRegistrationToken(const std::string& token);
-
-    /*
-    //   1. verify token signature using m_public_key
-    //   2. verify token creation time & expiration period
-    //   Return 0 for success
-    */
     bool parseUserLoginToken(const std::string& token);
-
-    /* 
-    //  1. verify token signature using m_public_key
-    //  2. verify token creation time & expiration period
-    //  3. extract new_public_key from token
-    //  4. replace m_public_key with new_public_key
-    //  5. update database with new public key
-    // Return 0 for success
-    */
     bool parseChangePasswordToken(const std::string& token);
 
     /* Properties */
