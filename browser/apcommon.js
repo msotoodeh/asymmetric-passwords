@@ -34,21 +34,21 @@ var AP_TAG_UPDATE_TOKEN         = "ut";
 var AP_TAG_CHALLENGE_RESPONSE   = "cr";
 
 function strToU8Array(str) {
-    var n = 0, c, bytes = new Uint8Array(str.length * 3);
+    var c, bytes = [];
     for (var i = 0; i < str.length; i++) {
         c = str.charCodeAt(i);
         if (c < 0x0080) {
-            bytes[n++] = c & 0x7F;
+            bytes.push(c & 0x7F);
         } else if (c < 0x0800) {
-            bytes[n++] = 0xC0 | ((c >>  6) & 0x1F);
-            bytes[n++] = 0x80 | ((c >>  0) & 0x3F);
+            bytes.push(0xC0 | ((c >>  6) & 0x1F));
+            bytes.push(0x80 | ((c >>  0) & 0x3F));
         } else {
-            bytes[n++] = 0xE0 | ((c >> 12) & 0x0F);
-            bytes[n++] = 0x80 | ((c >>  6) & 0x3F);
-            bytes[n++] = 0x80 | ((c >>  0) & 0x3F);
+            bytes.push(0xE0 | ((c >> 12) & 0x0F));
+            bytes.push(0x80 | ((c >>  6) & 0x3F));
+            bytes.push(0x80 | ((c >>  0) & 0x3F));
         }
     }
-    return bytes.slice(0, n);
+    return new Uint8Array(bytes);
 }
 
 // url-safe base64 encoder/decoder
