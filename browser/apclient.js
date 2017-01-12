@@ -26,8 +26,8 @@ var KDF_ITERATIONS = 100;
 
 function apclient(userid, passwd, domain) {
     var derived_key = pbkdf2_hmac_sha512(
-        utf8StringToU8Array(passwd), 
-        utf8StringToU8Array(userid + "&" + domain),
+        strToU8Array(passwd), 
+        strToU8Array(userid + "&" + domain),
         KDF_ITERATIONS, 32);
     var signKeys = nacl.sign.keyPair.fromSeed(derived_key);
     this.publicKey = b64encode(signKeys.publicKey);
@@ -43,7 +43,7 @@ apclient.prototype.genToken = function(tag, payload) {
     Math.floor(Math.random() * 0x100000000).toString(16) +
     Math.floor(Math.random() * 0x100000000).toString(16) + ".";
     
-    var sig = nacl.sign.detached(utf8StringToU8Array(token), this.privateKey);
+    var sig = nacl.sign.detached(strToU8Array(token), this.privateKey);
     return token + b64encode(sig);
 };
 

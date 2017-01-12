@@ -51,7 +51,7 @@ function apUserState(token) {
 
 apUserState.prototype.verifySignature = function(publicKey) {
     var sig = this.getItem(this.items.length-1);
-    var msg = utf8StringToU8Array(this.token.substring(0, this.token.length - sig.length));
+    var msg = strToU8Array(this.token.substring(0, this.token.length - sig.length));
     if (!nacl.sign.detached.verify(msg, b64decode(sig), b64decode(publicKey))) {
         this.error = AP_E_SIGNATURE;
         return false;

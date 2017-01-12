@@ -33,12 +33,22 @@ var AP_TAG_USER_LOGIN           = "li";
 var AP_TAG_UPDATE_TOKEN         = "ut";
 var AP_TAG_CHALLENGE_RESPONSE   = "cr";
 
-function utf8StringToU8Array(str) {
-    var bytes = new Uint8Array(str.length);
+function strToU8Array(str) {
+    var n = 0, c, bytes = new Uint8Array(str.length * 3);
     for (var i = 0; i < str.length; i++) {
-        bytes[i] = str.charCodeAt(i);
+        c = str.charCodeAt(i);
+        if (c < 0x0080) {
+            bytes[n++] = c & 0x7F;
+        } else if (c < 0x0800) {
+            bytes[n++] = 0xC0 | ((c >>  6) & 0x1F);
+            bytes[n++] = 0x80 | ((c >>  0) & 0x3F);
+        } else {
+            bytes[n++] = 0xE0 | ((c >> 12) & 0x0F);
+            bytes[n++] = 0x80 | ((c >>  6) & 0x3F);
+            bytes[n++] = 0x80 | ((c >>  0) & 0x3F);
+        }
     }
-    return bytes;
+    return bytes.slice(0, n);
 }
 
 // url-safe base64 encoder/decoder
