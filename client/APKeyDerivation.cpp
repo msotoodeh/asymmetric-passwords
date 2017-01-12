@@ -173,7 +173,7 @@ static void PRF(
         mac, sizeof(mac));
     memcpy (dk, mac, dkLen);
 
-    for (uint32_t off = 0; iterations > 1; iterations--)
+    while (--iterations > 0)
     {
         APDigest::hmac (
             password, passwordLen, 

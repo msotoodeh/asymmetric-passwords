@@ -71,7 +71,7 @@ void print_time_value(const char* msg, uint64_t t)
     //strftime(buf, sizeof(buf), "%Y-%m-%d %X", localtime((time_t*)&t));
     //strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S", localtime((time_t*)&t));
     strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %z", localtime((time_t*)&t));
-    printf("%s %lld (%s)\n", msg, t, buf);
+    printf("%s %llu (%s)\n", msg, t, buf);
 }
 
 const char* tag_name(unsigned int tag)
@@ -181,7 +181,7 @@ void demoUserLogin(
         if (verifier.getTimestamp() < ui.last_access_time)
         {
             // Token re-use
-            printf(" TOKEN-REUSE ....... : %lld\n", ui.last_access_time);
+            printf(" TOKEN-REUSE ....... : %llu\n", ui.last_access_time);
         }
 
         // SUCCESS
