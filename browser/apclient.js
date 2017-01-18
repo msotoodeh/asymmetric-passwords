@@ -24,6 +24,24 @@
 
 var KDF_ITERATIONS = 100;
 
+function scorePasswordStrength(pass)
+{
+    // +1 for pass bigger than 6 chars
+    // +2 for pass bigger than 12 chars
+    var score = (pass.length > 12) ? 2 : (pass.length > 6) ? 1 : 0;
+
+    // +1 if pass has both lower and uppercase characters
+    if (pass.match(/[a-z]/) && pass.match(/[A-Z]/)) score++;
+
+    // +1 if pass has at least one number
+    if (pass.match(/\d+/)) score++;
+
+    // +1 for non-alphanumeric caracthers
+    if (pass.match(/\W+/)) score++;
+
+    return score;
+}
+
 function apclient(userid, passwd, domain) {
     var derived_key = pbkdf2_hmac_sha512(
         strToU8Array(passwd), 

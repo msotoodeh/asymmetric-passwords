@@ -45,14 +45,15 @@ Where:
 With this approach:
 
     1.	Passwords stay private. 
-        a.	Do not need to share passwords with anyone. Public keys will be given instead.
-        b.	Passwords do not cross the line.
-        c.	Protection against eavesdropping on network connections.
+        a.	Public keys will be used instead of passwords.
+        b.  Trust-No-One, no third-party involvement.
+        c.	Passwords do not cross the line.
     2.	Promote enforcement of time-based access control.
-        a.	Protection against replay attacks
-        b.	Protects against token-reuse (One-time tokens).
-    3.	Server side security breaches do not compromise user accounts.
-        a.	Leaked user public keys do not compromise account access information.
+        a.	Protection against replay attacks.
+        b.	Protection against token-reuse (One-time tokens).
+        c.  Option to use server time (Date from HTML response header).
+    3.	Improve server side security.
+        a.	No shared secret. Knowledge of public keys do not lead to account compromise.
         b.	Protection against insider threats.
         c.	Public keys can be stored in clear.
         d.	No need for secure connection during login process.
@@ -60,17 +61,15 @@ With this approach:
         a.	KDF is client-only operation and may use domain-specific info for differentiation.
         b.	Reducing number of passwords to memorize. 
     5.	Support for random challenge/response authentication.
-    6.	Password splitting option:
-        a.	Part 1: Memorize this part of password.
-        b.	Part 2: Long and complex password part. This part is going to be stored on specific machines individually.
-        c.	Part 2 can be encrypted using part 1 as the key.
-        d.	Ability to enforce logins from pre-determined computers.
-        e.	A form of multi-factor authentication.
+    6.	Two factor authentication option:
+        a.	Input arguments of KDF may include account-specific secret key.
+        b.	This secret key can be stored on specific machines individually.
+        c.	Ability to enforce logins from pre-determined computers.
     7.	Ease of deployment. 
         a.	Passwords (or password hashes) can easily be converted to public keys.
         b.	No need to change user interface.
         c.	Push via login portals.
-    8.	Extendable and flexible URL-safe token design.
+    8.	Extendable and flexible URL-safe token format.
 
 
 Register a new user:
